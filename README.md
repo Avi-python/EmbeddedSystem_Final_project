@@ -7,6 +7,7 @@
 
 ### 通訊媒介 firebase -> mqtt
 - 使用免費的網路 server
+[HIVEMQ free mqtt server](https://www.hivemq.com/mqtt/public-mqtt-broker/)
 
 ### 連線確認
 - 借鑑TCP的 Three-way handshack

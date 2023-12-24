@@ -2,7 +2,7 @@ import 'dart:async';
 
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
-import 'package:fluttertoast/fluttertoast.dart';
+import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:mqtt_client/mqtt_client.dart';
 import 'package:mqtt_client/mqtt_server_client.dart';
 
@@ -44,6 +44,19 @@ class _MyHomePageState extends State<MyHomePage>
     with SingleTickerProviderStateMixin {
   late AnimationController _controller;
   late Animation<double> _opacity;
+  FlutterLocalNotificationsPlugin localNotificaition = FlutterLocalNotificationsPlugin();
+  final android = const AndroidInitializationSettings('@mipmap/ic_launcher');
+  late final initializationSettings;
+  final androidDetails = const AndroidNotificationDetails(
+      '10086',
+      'detect',
+      importance: Importance.max,
+      priority: Priority.high
+  );
+
+  late final details = NotificationDetails(
+      android: androidDetails,
+  );
   // Timer? _timer;
   // int _countdownSeconds = 0;
 
@@ -66,6 +79,12 @@ class _MyHomePageState extends State<MyHomePage>
     while (isConnect) {
       debugPrint("connectionPolling");
       if (isNoRespond) {
+        localNotificaition.show(
+            DateTime.now().millisecondsSinceEpoch >> 10,
+            '裝置斷線!!!',
+            '請重新連接',
+            details  //剛才的訊息通知規格變數
+        );
         setState(() {
           isConnect = false;
           isSecondHandShack = false;
@@ -155,6 +174,12 @@ class _MyHomePageState extends State<MyHomePage>
           SendEventManager.instance.markEventCompleted("_changeLockType");
         case 'd':
           if(pt[2] == "s") {
+            localNotificaition.show(
+                DateTime.now().millisecondsSinceEpoch >> 10,
+                '物品被移動!!!!',
+                '請盡速查看!!!!',
+                details  //剛才的訊息通知規格變數
+            );
             setState(() {
               isDetect = true;
               isLock = true;
@@ -246,7 +271,7 @@ class _MyHomePageState extends State<MyHomePage>
       });
     } catch (e) {
       debugPrint("_disableAlarmError: $e");
-      _toaster("變更鎖時發生錯誤，請嘗試重新連線箱子");
+      // _toaster("變更鎖時發生錯誤，請嘗試重新連線箱子");
     }
   }
 
@@ -279,21 +304,24 @@ class _MyHomePageState extends State<MyHomePage>
     }
   }
 
-  void _toaster(String msg) {
-    Fluttertoast.showToast(
-        msg: msg,
-        toastLength: Toast.LENGTH_SHORT,
-        gravity: ToastGravity.CENTER,
-        timeInSecForIosWeb: 1,
-        backgroundColor: Theme.of(context).colorScheme.onSurface,
-        textColor: Theme.of(context).colorScheme.onInverseSurface,
-        fontSize: 16.0);
-  }
+  // void _toaster(String msg) {
+  //   Fluttertoast.showToast(
+  //       msg: msg,
+  //       toastLength: Toast.LENGTH_SHORT,
+  //       gravity: ToastGravity.CENTER,
+  //       timeInSecForIosWeb: 1,
+  //       backgroundColor: Theme.of(context).colorScheme.onSurface,
+  //       textColor: Theme.of(context).colorScheme.onInverseSurface,
+  //       fontSize: 16.0);
+  // }
 
   @override
   void initState() {
     super.initState();
     // 初始化动画控制器
+    initializationSettings = InitializationSettings(android: android);
+    localNotificaition.initialize(InitializationSettings(android: android));
+
     _controller = AnimationController(
       duration: Duration(milliseconds: 500),
       vsync: this,
