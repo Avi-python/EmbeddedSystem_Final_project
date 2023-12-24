@@ -5,6 +5,8 @@
 ### Accelerometer
 他有偵測物體傾斜程度的功能，細節不知道，但應該是測量重力加速度所算出。
 
+## 通訊
+
 ### 通訊媒介 firebase -> mqtt
 - 使用免費的網路 server
 [HIVEMQ free mqtt server](https://www.hivemq.com/mqtt/public-mqtt-broker/)
@@ -39,3 +41,7 @@
 
 ### 解除警戒
 - 重新設置 box 那邊的 init_accel_(x,y,z), init_gryo_(x,y,z)
+
+## app 通知
+- 如果黑箱被移動
+- 如果黑箱離線
