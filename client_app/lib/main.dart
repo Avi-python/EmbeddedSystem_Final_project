@@ -75,27 +75,37 @@ class _MyHomePageState extends State<MyHomePage>
   bool isDetect = false;
   bool isTryDisableAlarm = false;
 
+  Timer? pollingTimer;
+
+
   Future<void> _checkConnectionPolling() async {
-    while (isConnect) {
-      debugPrint("connectionPolling");
-      if (isNoRespond) {
-        localNotificaition.show(
-            DateTime.now().millisecondsSinceEpoch >> 10,
-            '裝置斷線!!!',
-            '請重新連接',
-            details  //剛才的訊息通知規格變數
-        );
-        setState(() {
-          isConnect = false;
-          isSecondHandShack = false;
-          isTryChangeConnection = false;
-          isTryChangeLockType = false;
-        });
-        break;
-      }
+    isNoRespond = false;
+    _checkConnectionPollingSingleRound();
+  }
+
+  Future<void> _checkConnectionPollingSingleRound() async {
+    debugPrint("connectionPolling");
+    if (isNoRespond) {
+      localNotificaition.show(
+          DateTime.now().millisecondsSinceEpoch >> 10,
+          '裝置斷線!!!',
+          '請重新連接',
+          details  //剛才的訊息通知規格變數
+      );
+      client.disconnect();
+      setState(() {
+        isConnect = false;
+        isSecondHandShack = false;
+        isTryChangeConnection = false;
+        isTryChangeLockType = false;
+      });
+      pollingTimer!.cancel();
+    } else {
       isNoRespond = true;
       _sendMessage("1c");
-      await Future.delayed(const Duration(seconds: 10));
+      pollingTimer = Timer(Duration(seconds: 10), () async {
+        await _checkConnectionPollingSingleRound();
+      });
     }
   }
 
@@ -219,6 +229,7 @@ class _MyHomePageState extends State<MyHomePage>
       _checkConnectionPolling();
     } catch (e) {
       debugPrint("_initConnectionBlackBoxError: $e");
+      client.disconnect();
       setState(() {
         isTryChangeConnection = false;
       });
@@ -227,7 +238,7 @@ class _MyHomePageState extends State<MyHomePage>
   }
 
   Future<void> _secondHandShake() async {
-    int time = 10;
+    int time = 5;
     while (!isSecondHandShack) {
       if (time < 0) {
         throw FormatException("_secondHandShakeError: Reply time out");
@@ -250,6 +261,14 @@ class _MyHomePageState extends State<MyHomePage>
   Future<void> _disconnect() async {
     try {
       await _sendMessage("1f");
+      pollingTimer!.cancel();
+      client.disconnect();
+      setState(() {
+        isConnect = false;
+        isSecondHandShack = false;
+        isTryChangeConnection = false;
+        isTryChangeLockType = false;
+      });
     } catch (e) {
       debugPrint("badDisconnect:$e");
     } finally {
@@ -332,10 +351,11 @@ class _MyHomePageState extends State<MyHomePage>
   }
 
   @override
-  void dispose() {
+  void dispose() async {
     super.dispose();
-    _disconnect();
+    await _disconnect();
     // _timer?.cancel();
+    pollingTimer?.cancel();
     _controller.dispose();
   }
 
