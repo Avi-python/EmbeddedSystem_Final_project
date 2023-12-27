@@ -49,3 +49,17 @@
 ## app 通知
 - 如果黑箱被移動
 - 如果黑箱離線
+
+## 板子開機時啟動腳本
+
+在 crontab 裡面新增
+
+@reboot /home/pi/c9sdk/workspace/script/guard_box.sh
+
+# 開發工具
+
+## cloud9
+
+```sh
+sudo forever /home/pi/c9sdk/server.js -p 8080 -l 0.0.0.0
+```

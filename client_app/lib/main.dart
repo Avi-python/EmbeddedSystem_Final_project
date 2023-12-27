@@ -44,19 +44,17 @@ class _MyHomePageState extends State<MyHomePage>
     with SingleTickerProviderStateMixin {
   late AnimationController _controller;
   late Animation<double> _opacity;
-  FlutterLocalNotificationsPlugin localNotificaition = FlutterLocalNotificationsPlugin();
+  FlutterLocalNotificationsPlugin localNotificaition =
+      FlutterLocalNotificationsPlugin();
   final android = const AndroidInitializationSettings('@mipmap/ic_launcher');
   late final initializationSettings;
-  final androidDetails = const AndroidNotificationDetails(
-      '10086',
-      'detect',
-      importance: Importance.max,
-      priority: Priority.high
-  );
+  final androidDetails = const AndroidNotificationDetails('10086', 'detect',
+      importance: Importance.max, priority: Priority.high);
 
   late final details = NotificationDetails(
-      android: androidDetails,
+    android: androidDetails,
   );
+
   // Timer? _timer;
   // int _countdownSeconds = 0;
 
@@ -74,9 +72,9 @@ class _MyHomePageState extends State<MyHomePage>
   bool isNoRespond = false;
   bool isDetect = false;
   bool isTryDisableAlarm = false;
+  bool isWifiMode = true;
 
   Timer? pollingTimer;
-
 
   Future<void> _checkConnectionPolling() async {
     isNoRespond = false;
@@ -86,12 +84,9 @@ class _MyHomePageState extends State<MyHomePage>
   Future<void> _checkConnectionPollingSingleRound() async {
     debugPrint("connectionPolling");
     if (isNoRespond) {
-      localNotificaition.show(
-          DateTime.now().millisecondsSinceEpoch >> 10,
-          '裝置斷線!!!',
-          '請重新連接',
-          details  //剛才的訊息通知規格變數
-      );
+      localNotificaition.show(DateTime.now().millisecondsSinceEpoch >> 10,
+          '裝置斷線!!!', '請重新連接', details //剛才的訊息通知規格變數
+          );
       client.disconnect();
       setState(() {
         isConnect = false;
@@ -183,13 +178,10 @@ class _MyHomePageState extends State<MyHomePage>
           }
           SendEventManager.instance.markEventCompleted("_changeLockType");
         case 'd':
-          if(pt[2] == "s") {
-            localNotificaition.show(
-                DateTime.now().millisecondsSinceEpoch >> 10,
-                '物品被移動!!!!',
-                '請盡速查看!!!!',
-                details  //剛才的訊息通知規格變數
-            );
+          if (pt[2] == "s") {
+            localNotificaition.show(DateTime.now().millisecondsSinceEpoch >> 10,
+                '物品被移動!!!!', '請盡速查看!!!!', details //剛才的訊息通知規格變數
+                );
             setState(() {
               isDetect = true;
               isLock = true;
@@ -364,233 +356,258 @@ class _MyHomePageState extends State<MyHomePage>
     return Scaffold(
       backgroundColor: Theme.of(context).colorScheme.background.withOpacity(1),
       appBar: CustomTitle("Dashboard"),
-      body: Container(
-        child: Center(
-          child: Stack(
-            children: [
-              isDetect && isConnect
-                  ? Align(
-                      alignment: Alignment.topCenter,
+      body: AnimatedSwitcher(
+        duration: const Duration(milliseconds: 500),
+        child: Container(
+          color: isWifiMode ? Theme.of(context).colorScheme.background.withOpacity(1) : Colors.blue.withOpacity(0.3),
+          child: Center(
+            child: Stack(
+              children: [
+                Stack(
+                  children: [
+                    Align(
+                      alignment: Alignment.topRight,
                       child: Padding(
-                          padding: const EdgeInsets.only(top: 80),
-                          child: AnimatedBuilder(
-                              animation: _opacity,
-                              builder: (context, child) {
-                                return Opacity(
-                                  opacity: _opacity.value,
-                                  child: IconButton(
-                                      icon: Icon(
-                                        Icons.warning_amber_outlined,
-                                        size: 100.0,
-                                        shadows: [
-                                          Shadow(
-                                            color: Theme.of(context)
-                                                .colorScheme
-                                                .onBackground,
-                                            blurRadius: 1,
-                                            offset: const Offset(2, 2),
-                                          )
+                        padding: const EdgeInsets.all(12.0),
+                        child: Switch(
+                          inactiveThumbColor: Colors.white,
+                            inactiveTrackColor: Theme.of(context).colorScheme.primary,
+                            activeTrackColor: Colors.blue,
+                            trackOutlineColor: MaterialStateProperty.all<Color>(Colors.red.withOpacity(0)),
+                            value: !isWifiMode,
+                            onChanged: (newValue) {
+                          setState(() {
+                            isWifiMode = !newValue;
+                          });
+                        }),
+                      ),
+                    ),
+                    isDetect && isConnect
+                        ? Align(
+                            alignment: Alignment.topCenter,
+                            child: Padding(
+                                padding: const EdgeInsets.only(top: 80),
+                                child: AnimatedBuilder(
+                                    animation: _opacity,
+                                    builder: (context, child) {
+                                      return Opacity(
+                                        opacity: _opacity.value,
+                                        child: IconButton(
+                                            icon: Icon(
+                                              Icons.warning_amber_outlined,
+                                              size: 100.0,
+                                              shadows: [
+                                                Shadow(
+                                                  color: Theme.of(context)
+                                                      .colorScheme
+                                                      .onBackground,
+                                                  blurRadius: 1,
+                                                  offset: const Offset(2, 2),
+                                                )
+                                              ],
+                                            ),
+                                            color: Colors.redAccent,
+                                            onPressed: () {
+                                              if (!isTryDisableAlarm) {
+                                                _disableAlarm();
+                                              }
+                                            }),
+                                      );
+                                    })),
+                          )
+                        : const SizedBox(),
+                  ],
+                ),
+                Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: <Widget>[
+                    Image.asset(
+                      isLock
+                          ? 'lib/assets/guard_black_box_1_closed.png'
+                          : 'lib/assets/guard_black_box_1_open.png',
+                      width: 300.0, // Adjust width as needed
+                      height: 300.0, // Adjust height as needed
+                      fit: BoxFit.contain,
+                      opacity: AlwaysStoppedAnimation(isConnect ? 1 : 0.3),
+                    ),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        isConnect
+                            ? Text(
+                                "Connect",
+                                style: TextStyle(color: Colors.greenAccent),
+                              )
+                            : Text(
+                                "Disconnect",
+                                style: TextStyle(
+                                    color: Colors.grey.withOpacity(0.5)),
+                              ),
+                        const SizedBox(width: 10),
+                        Icon(
+                          Icons.check_circle_rounded,
+                          color: isConnect
+                              ? Colors.greenAccent
+                              : Colors.grey.withOpacity(0.5),
+                        )
+                      ],
+                    ),
+                    const SizedBox(height: 20),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Container(
+                          height: 50,
+                          child: TextButton(
+                            style: ButtonStyle(
+                              backgroundColor: MaterialStateProperty.all<Color>(
+                                  Theme.of(context).colorScheme.surface),
+                              foregroundColor: MaterialStateProperty.all<Color>(
+                                  isConnect
+                                      ? Theme.of(context)
+                                          .colorScheme
+                                          .error
+                                          .withOpacity(0.5)
+                                      : Theme.of(context).colorScheme.primary),
+                              padding:
+                                  MaterialStateProperty.all<EdgeInsetsGeometry>(
+                                EdgeInsets.symmetric(
+                                    horizontal: 20, vertical: 10),
+                              ),
+                              textStyle: MaterialStateProperty.all<TextStyle>(
+                                TextStyle(fontSize: 18),
+                              ),
+                              elevation:
+                                  MaterialStateProperty.resolveWith<double>(
+                                (Set<MaterialState> states) {
+                                  if (states.contains(MaterialState.pressed)) {
+                                    return 0;
+                                  }
+                                  return 10;
+                                },
+                              ),
+                              shadowColor: MaterialStateProperty.all<Color>(
+                                  Theme.of(context)
+                                      .colorScheme
+                                      .onSurface
+                                      .withOpacity(0.5)),
+                              // Add more properties as needed
+                            ),
+                            child: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                isTryChangeConnection
+                                    ? const CupertinoActivityIndicator()
+                                    : const SizedBox(),
+                                isTryChangeConnection
+                                    ? Padding(padding: EdgeInsets.all(5))
+                                    : const SizedBox(),
+                                isConnect ? Text("Disconnect") : Text("Connect"),
+                              ],
+                            ),
+                            onPressed: () async {
+                              if (isTryChangeConnection == false) {
+                                if (isConnect) {
+                                  setState(() {
+                                    isTryChangeConnection = true;
+                                  });
+                                  // todo Disconnect
+                                  await _disconnect();
+                                } else {
+                                  setState(() {
+                                    isTryChangeConnection = true;
+                                  });
+                                  await _initConnectBlackBox();
+                                }
+                              }
+                            },
+                          ),
+                        ),
+                        isConnect
+                            ? Padding(
+                                padding: const EdgeInsets.only(left: 20),
+                                child: Container(
+                                  height: 50,
+                                  child: TextButton(
+                                    style: ButtonStyle(
+                                      backgroundColor: MaterialStateProperty.all<
+                                              Color>(
+                                          Theme.of(context).colorScheme.surface),
+                                      foregroundColor:
+                                          MaterialStateProperty.all<Color>(
+                                              isConnect
+                                                  ? Theme.of(context)
+                                                      .colorScheme
+                                                      .primary
+                                                  : Theme.of(context)
+                                                      .colorScheme
+                                                      .error
+                                                      .withOpacity(0.5)),
+                                      padding: MaterialStateProperty.all<
+                                          EdgeInsetsGeometry>(
+                                        EdgeInsets.symmetric(
+                                            horizontal: 20, vertical: 10),
+                                      ),
+                                      textStyle:
+                                          MaterialStateProperty.all<TextStyle>(
+                                        TextStyle(fontSize: 18),
+                                      ),
+                                      elevation: MaterialStateProperty
+                                          .resolveWith<double>(
+                                        (Set<MaterialState> states) {
+                                          if (states
+                                              .contains(MaterialState.pressed)) {
+                                            return 0;
+                                          }
+                                          return 10;
+                                        },
+                                      ),
+                                      shadowColor:
+                                          MaterialStateProperty.all<Color>(
+                                              Theme.of(context)
+                                                  .colorScheme
+                                                  .onSurface
+                                                  .withOpacity(0.5)),
+                                      // Add more properties as needed
+                                    ),
+                                    child: Container(
+                                      child: Row(
+                                        mainAxisSize: MainAxisSize.min,
+                                        children: [
+                                          isTryChangeLockType
+                                              ? const CupertinoActivityIndicator()
+                                              : const SizedBox(),
+                                          isTryChangeLockType
+                                              ? const Padding(
+                                                  padding: EdgeInsets.all(5))
+                                              : const SizedBox(),
+                                          !isLock ? Text("Lock") : Text("UnLock"),
+                                          const Padding(
+                                              padding: EdgeInsets.all(5)),
+                                          !isLock
+                                              ? const Icon(Icons.lock)
+                                              : const Icon(Icons.lock_open),
                                         ],
                                       ),
-                                      color: Colors.redAccent,
-                                      onPressed: () {
-                                        if(!isTryDisableAlarm) {
-                                          _disableAlarm();
-                                          }
-                                      }),
-                                );
-                              })),
-                    )
-                  : const SizedBox(),
-              Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: <Widget>[
-                  Image.asset(
-                    isLock
-                        ? 'lib/assets/guard_black_box_1_closed.png'
-                        : 'lib/assets/guard_black_box_1_open.png',
-                    width: 300.0, // Adjust width as needed
-                    height: 300.0, // Adjust height as needed
-                    fit: BoxFit.contain,
-                    opacity: AlwaysStoppedAnimation(isConnect ? 1 : 0.3),
-                  ),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      isConnect
-                          ? Text(
-                              "Connect",
-                              style: TextStyle(color: Colors.greenAccent),
-                            )
-                          : Text(
-                              "Disconnect",
-                              style: TextStyle(
-                                  color: Colors.grey.withOpacity(0.5)),
-                            ),
-                      const SizedBox(width: 10),
-                      Icon(
-                        Icons.check_circle_rounded,
-                        color: isConnect
-                            ? Colors.greenAccent
-                            : Colors.grey.withOpacity(0.5),
-                      )
-                    ],
-                  ),
-                  const SizedBox(height: 20),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Container(
-                        height: 50,
-                        child: TextButton(
-                          style: ButtonStyle(
-                            backgroundColor: MaterialStateProperty.all<Color>(
-                                Theme.of(context).colorScheme.surface),
-                            foregroundColor: MaterialStateProperty.all<Color>(
-                                isConnect
-                                    ? Theme.of(context)
-                                        .colorScheme
-                                        .error
-                                        .withOpacity(0.5)
-                                    : Theme.of(context).colorScheme.primary),
-                            padding:
-                                MaterialStateProperty.all<EdgeInsetsGeometry>(
-                              EdgeInsets.symmetric(
-                                  horizontal: 20, vertical: 10),
-                            ),
-                            textStyle: MaterialStateProperty.all<TextStyle>(
-                              TextStyle(fontSize: 18),
-                            ),
-                            elevation:
-                                MaterialStateProperty.resolveWith<double>(
-                              (Set<MaterialState> states) {
-                                if (states.contains(MaterialState.pressed)) {
-                                  return 0;
-                                }
-                                return 10;
-                              },
-                            ),
-                            shadowColor: MaterialStateProperty.all<Color>(
-                                Theme.of(context)
-                                    .colorScheme
-                                    .onSurface
-                                    .withOpacity(0.5)),
-                            // Add more properties as needed
-                          ),
-                          child: Row(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              isTryChangeConnection
-                                  ? const CupertinoActivityIndicator()
-                                  : const SizedBox(),
-                              isTryChangeConnection
-                                  ? Padding(padding: EdgeInsets.all(5))
-                                  : const SizedBox(),
-                              isConnect ? Text("Disconnect") : Text("Connect"),
-                            ],
-                          ),
-                          onPressed: () async {
-                            if (isTryChangeConnection == false) {
-                              if (isConnect) {
-                                setState(() {
-                                  isTryChangeConnection = true;
-                                });
-                                // todo Disconnect
-                                await _disconnect();
-                              } else {
-                                setState(() {
-                                  isTryChangeConnection = true;
-                                });
-                                await _initConnectBlackBox();
-                              }
-                            }
-                          },
-                        ),
-                      ),
-                      isConnect
-                          ? Padding(
-                              padding: const EdgeInsets.only(left: 20),
-                              child: Container(
-                                height: 50,
-                                child: TextButton(
-                                  style: ButtonStyle(
-                                    backgroundColor: MaterialStateProperty.all<
-                                            Color>(
-                                        Theme.of(context).colorScheme.surface),
-                                    foregroundColor:
-                                        MaterialStateProperty.all<Color>(
-                                            isConnect
-                                                ? Theme.of(context)
-                                                    .colorScheme
-                                                    .primary
-                                                : Theme.of(context)
-                                                    .colorScheme
-                                                    .error
-                                                    .withOpacity(0.5)),
-                                    padding: MaterialStateProperty.all<
-                                        EdgeInsetsGeometry>(
-                                      EdgeInsets.symmetric(
-                                          horizontal: 20, vertical: 10),
                                     ),
-                                    textStyle:
-                                        MaterialStateProperty.all<TextStyle>(
-                                      TextStyle(fontSize: 18),
-                                    ),
-                                    elevation: MaterialStateProperty
-                                        .resolveWith<double>(
-                                      (Set<MaterialState> states) {
-                                        if (states
-                                            .contains(MaterialState.pressed)) {
-                                          return 0;
-                                        }
-                                        return 10;
-                                      },
-                                    ),
-                                    shadowColor:
-                                        MaterialStateProperty.all<Color>(
-                                            Theme.of(context)
-                                                .colorScheme
-                                                .onSurface
-                                                .withOpacity(0.5)),
-                                    // Add more properties as needed
+                                    onPressed: () async {
+                                      if (!isTryChangeLockType) {
+                                        setState(() {
+                                          isTryChangeLockType = true;
+                                        });
+                                        await _changeLockType();
+                                      }
+                                    },
                                   ),
-                                  child: Container(
-                                    child: Row(
-                                      mainAxisSize: MainAxisSize.min,
-                                      children: [
-                                        isTryChangeLockType
-                                            ? const CupertinoActivityIndicator()
-                                            : const SizedBox(),
-                                        isTryChangeLockType
-                                            ? const Padding(
-                                                padding: EdgeInsets.all(5))
-                                            : const SizedBox(),
-                                        !isLock ? Text("Lock") : Text("UnLock"),
-                                        const Padding(
-                                            padding: EdgeInsets.all(5)),
-                                        !isLock
-                                            ? const Icon(Icons.lock)
-                                            : const Icon(Icons.lock_open),
-                                      ],
-                                    ),
-                                  ),
-                                  onPressed: () async {
-                                    if (!isTryChangeLockType) {
-                                      setState(() {
-                                        isTryChangeLockType = true;
-                                      });
-                                      await _changeLockType();
-                                    }
-                                  },
                                 ),
-                              ),
-                            )
-                          : const SizedBox(),
-                    ],
-                  ),
-                ],
-              ),
-            ],
+                              )
+                            : const SizedBox(),
+                      ],
+                    ),
+                  ],
+                ),
+              ],
+            ),
           ),
         ),
       ),
