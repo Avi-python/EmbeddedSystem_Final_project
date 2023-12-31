@@ -16,7 +16,13 @@
 [HIVEMQ free mqtt server](https://www.hivemq.com/mqtt/public-mqtt-broker/)
 
 ### 連線確認
+
+#### client app 
+app must connect to black box instead of mqtt server 
 - 借鑑TCP的 Three-way handshack
+
+#### black box
+box must connect to server
 
 ### 通訊訊息格式
 
@@ -52,14 +58,47 @@
 
 ## 板子開機時啟動腳本
 
+### 原本借鑑 Lab8 開機服務
 在 crontab 裡面新增
-
 @reboot /home/pi/c9sdk/workspace/script/guard_box.sh
+
+### Finally, I use .service to done this
+
+add a new file in /etc/systemd/system
+
+```console
+sudo vim /etc/systemd/system/guard_box.service
+```
+
+file content
+
+``` console
+[Unit]
+Description = Guard box
+After = network.target
+
+[Service]
+ExecStart = /home/pi/c9sdk/workspace/Final/guard_black_box.py
+Restart = always
+
+[Install]
+WantedBy = multi-user.target
+```
+
+because this is system execute, so no need to use `sudo`
+
+update config : `sudo systemctl daemon-reload`
+enable service : `sudo systemctl enable guard_box.service`
+disable service : `sudo systemctl disable guard_box.service`
+start service : `sudo systemctl start guard_box.service`
+stop service : `sudo systemctl stop guard_box.service`
 
 # 開發工具
 
 ## cloud9
 
-```sh
-sudo forever /home/pi/c9sdk/server.js -p 8080 -l 0.0.0.0
+```console
+sudo forever /home/pi/c9sdk/server.js -p 8080 -l 0.0.0.0 -a name:passwd -w workspace
 ```
+
+sometimes it will not execute, maybe it's becuase it cannot find workspace, you should go to right place to execute this command
